@@ -120,6 +120,140 @@ func TestPatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "replace with filter expression in path",
+			in: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "Work 1",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type eq \"work\"].formatted", Value: "Remote 1"}},
+			out: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "Remote 1",
+					},
+				},
+			},
+		},
+		{
+			name: "replace entire object with filter expression",
+			in: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "Work 1",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type eq \"work\"]", Value: map[string]any{
+				"type":      "remote",
+				"formatted": "Remote 1",
+			}}},
+			out: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "remote",
+						"formatted": "Remote 1",
+					},
+				},
+			},
+		},
+		{
+			name: "replace with not-equal filter expression",
+			in: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "Work 1",
+					},
+					map[string]any{
+						"type":      "other",
+						"formatted": "Other 1",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type ne \"home\"].formatted", Value: "Remote 1"}},
+			out: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "Remote 1",
+					},
+					map[string]any{
+						"type":      "other",
+						"formatted": "Remote 1",
+					},
+				},
+			},
+		},
+		{
+			name: "replace entire object with not-equal filter expression",
+			in: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "Work 1",
+					},
+					map[string]any{
+						"type":      "other",
+						"formatted": "Other 1",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type ne \"home\"]", Value: map[string]any{
+				"type":      "remote",
+				"formatted": "Remote 1",
+			}}},
+			out: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "Home 1",
+					},
+					map[string]any{
+						"type":      "remote",
+						"formatted": "Remote 1",
+					},
+					map[string]any{
+						"type":      "remote",
+						"formatted": "Remote 1",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range testCases {
