@@ -383,7 +383,8 @@ CREATE TABLE public.scim_users (
     scim_directory_id uuid NOT NULL,
     email character varying NOT NULL,
     deleted boolean NOT NULL,
-    attributes jsonb
+    attributes jsonb,
+    schemas text[] NOT NULL DEFAULT '{}'::text[]
 );
 
 

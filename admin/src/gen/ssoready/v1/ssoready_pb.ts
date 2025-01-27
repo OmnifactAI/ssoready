@@ -856,6 +856,17 @@ export class SCIMUser extends Message<SCIMUser> {
    */
   attributes?: Struct;
 
+  /**
+   * The SCIM schemas associated with this user.
+   *
+   * These are typically URNs like "urn:ietf:params:scim:schemas:core:2.0:User" or
+   * "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User" that indicate what attributes are available
+   * on the user.
+   *
+   * @generated from field: repeated string schemas = 6;
+   */
+  schemas: string[] = [];
+
   constructor(data?: PartialMessage<SCIMUser>) {
     super();
     proto3.util.initPartial(data, this);
@@ -869,6 +880,7 @@ export class SCIMUser extends Message<SCIMUser> {
     { no: 3, name: "email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "deleted", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 5, name: "attributes", kind: "message", T: Struct },
+    { no: 6, name: "schemas", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SCIMUser {
