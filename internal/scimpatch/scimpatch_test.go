@@ -362,6 +362,56 @@ func TestPatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "replace with present filter expression",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "xxx",
+					},
+					map[string]any{
+						"type": "bar",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "",
+					},
+					map[string]any{
+						"type": "qux",
+						"str":  nil,
+					},
+					map[string]any{
+						"type": "qux",
+						"str":  "zzz",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str pr].type", Value: "aaa"}},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "aaa",
+						"str":  "xxx",
+					},
+					map[string]any{
+						"type": "bar",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "",
+					},
+					map[string]any{
+						"type": "qux",
+						"str":  nil,
+					},
+					map[string]any{
+						"type": "aaa",
+						"str":  "zzz",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range testCases {

@@ -101,6 +101,12 @@ func applyOp(op Operation, obj *map[string]any) error {
 							} else {
 								return fmt.Errorf("'ew' operator can only be used with string values")
 							}
+						case "pr":
+							if str, ok := v.(string); ok {
+								matches = str != ""
+							} else {
+								matches = v != nil
+							}
 						default:
 							return fmt.Errorf("unsupported filter operator: %q", segment.filter.op)
 						}
@@ -255,6 +261,12 @@ func splitPath(path string) []pathSegment {
 
 func parseFilter(expr string) *filterExpr {
 	parts := strings.Split(expr, " ")
+	if len(parts) == 2 && parts[1] == "pr" {
+		return &filterExpr{
+			attr: parts[0],
+			op:   "pr",
+		}
+	}
 	if len(parts) != 3 {
 		return nil
 	}
