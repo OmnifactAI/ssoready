@@ -254,6 +254,78 @@ func TestPatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "replace with contains filter expression",
+			in: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "123 Main St",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "456 Main St",
+					},
+					map[string]any{
+						"type":      "other",
+						"formatted": "789 Side St",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[formatted co \"Main\"].type", Value: "primary"}},
+			out: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "primary",
+						"formatted": "123 Main St",
+					},
+					map[string]any{
+						"type":      "primary",
+						"formatted": "456 Main St",
+					},
+					map[string]any{
+						"type":      "other",
+						"formatted": "789 Side St",
+					},
+				},
+			},
+		},
+		{
+			name: "replace with starts-with filter expression",
+			in: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "home",
+						"formatted": "123 Main St",
+					},
+					map[string]any{
+						"type":      "work",
+						"formatted": "123 Side St",
+					},
+					map[string]any{
+						"type":      "other",
+						"formatted": "456 Main St",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[formatted sw \"123\"].type", Value: "primary"}},
+			out: map[string]any{
+				"addresses": []any{
+					map[string]any{
+						"type":      "primary",
+						"formatted": "123 Main St",
+					},
+					map[string]any{
+						"type":      "primary",
+						"formatted": "123 Side St",
+					},
+					map[string]any{
+						"type":      "other",
+						"formatted": "456 Main St",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range testCases {

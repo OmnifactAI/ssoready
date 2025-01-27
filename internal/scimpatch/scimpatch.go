@@ -83,6 +83,18 @@ func applyOp(op Operation, obj *map[string]any) error {
 							matches = v == segment.filter.value
 						case "ne":
 							matches = v != segment.filter.value
+						case "co":
+							if str, ok := v.(string); ok {
+								matches = strings.Contains(str, segment.filter.value)
+							} else {
+								return fmt.Errorf("'co' operator can only be used with string values")
+							}
+						case "sw":
+							if str, ok := v.(string); ok {
+								matches = strings.HasPrefix(str, segment.filter.value)
+							} else {
+								return fmt.Errorf("'sw' operator can only be used with string values")
+							}
 						default:
 							return fmt.Errorf("unsupported filter operator: %q", segment.filter.op)
 						}
