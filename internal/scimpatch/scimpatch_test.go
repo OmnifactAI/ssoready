@@ -123,27 +123,27 @@ func TestPatch(t *testing.T) {
 		{
 			name: "replace with filter expression in path",
 			in: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "Work 1",
+						"type": "bar",
+						"str":  "yyy",
 					},
 				},
 			},
-			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type eq \"work\"].formatted", Value: "Remote 1"}},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[type eq \"bar\"].str", Value: "zzz"}},
 			out: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "Remote 1",
+						"type": "bar",
+						"str":  "zzz",
 					},
 				},
 			},
@@ -151,30 +151,30 @@ func TestPatch(t *testing.T) {
 		{
 			name: "replace entire object with filter expression",
 			in: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "Work 1",
+						"type": "bar",
+						"str":  "yyy",
 					},
 				},
 			},
-			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type eq \"work\"]", Value: map[string]any{
-				"type":      "remote",
-				"formatted": "Remote 1",
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[type eq \"bar\"]", Value: map[string]any{
+				"type": "baz",
+				"str":  "zzz",
 			}}},
 			out: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "remote",
-						"formatted": "Remote 1",
+						"type": "baz",
+						"str":  "zzz",
 					},
 				},
 			},
@@ -182,35 +182,35 @@ func TestPatch(t *testing.T) {
 		{
 			name: "replace with not-equal filter expression",
 			in: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "Work 1",
+						"type": "bar",
+						"str":  "yyy",
 					},
 					map[string]any{
-						"type":      "other",
-						"formatted": "Other 1",
+						"type": "baz",
+						"str":  "zzz",
 					},
 				},
 			},
-			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type ne \"home\"].formatted", Value: "Remote 1"}},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[type ne \"foo\"].str", Value: "aaa"}},
 			out: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "Remote 1",
+						"type": "bar",
+						"str":  "aaa",
 					},
 					map[string]any{
-						"type":      "other",
-						"formatted": "Remote 1",
+						"type": "baz",
+						"str":  "aaa",
 					},
 				},
 			},
@@ -218,38 +218,38 @@ func TestPatch(t *testing.T) {
 		{
 			name: "replace entire object with not-equal filter expression",
 			in: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "Work 1",
+						"type": "bar",
+						"str":  "yyy",
 					},
 					map[string]any{
-						"type":      "other",
-						"formatted": "Other 1",
+						"type": "baz",
+						"str":  "zzz",
 					},
 				},
 			},
-			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[type ne \"home\"]", Value: map[string]any{
-				"type":      "remote",
-				"formatted": "Remote 1",
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[type ne \"foo\"]", Value: map[string]any{
+				"type": "aaa",
+				"str":  "bbb",
 			}}},
 			out: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "Home 1",
+						"type": "foo",
+						"str":  "xxx",
 					},
 					map[string]any{
-						"type":      "remote",
-						"formatted": "Remote 1",
+						"type": "aaa",
+						"str":  "bbb",
 					},
 					map[string]any{
-						"type":      "remote",
-						"formatted": "Remote 1",
+						"type": "aaa",
+						"str":  "bbb",
 					},
 				},
 			},
@@ -257,35 +257,35 @@ func TestPatch(t *testing.T) {
 		{
 			name: "replace with contains filter expression",
 			in: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "123 Main St",
+						"type": "foo",
+						"str":  "xxx_abc",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "456 Main St",
+						"type": "bar",
+						"str":  "yyy_abc",
 					},
 					map[string]any{
-						"type":      "other",
-						"formatted": "789 Side St",
+						"type": "baz",
+						"str":  "zzz",
 					},
 				},
 			},
-			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[formatted co \"Main\"].type", Value: "primary"}},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str co \"abc\"].type", Value: "aaa"}},
 			out: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "primary",
-						"formatted": "123 Main St",
+						"type": "aaa",
+						"str":  "xxx_abc",
 					},
 					map[string]any{
-						"type":      "primary",
-						"formatted": "456 Main St",
+						"type": "aaa",
+						"str":  "yyy_abc",
 					},
 					map[string]any{
-						"type":      "other",
-						"formatted": "789 Side St",
+						"type": "baz",
+						"str":  "zzz",
 					},
 				},
 			},
@@ -293,35 +293,35 @@ func TestPatch(t *testing.T) {
 		{
 			name: "replace with starts-with filter expression",
 			in: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "home",
-						"formatted": "123 Main St",
+						"type": "foo",
+						"str":  "xxx_abc",
 					},
 					map[string]any{
-						"type":      "work",
-						"formatted": "123 Side St",
+						"type": "bar",
+						"str":  "xxx_def",
 					},
 					map[string]any{
-						"type":      "other",
-						"formatted": "456 Main St",
+						"type": "baz",
+						"str":  "yyy_abc",
 					},
 				},
 			},
-			ops: []scimpatch.Operation{{Op: "Replace", Path: "addresses[formatted sw \"123\"].type", Value: "primary"}},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str sw \"xxx\"].type", Value: "aaa"}},
 			out: map[string]any{
-				"addresses": []any{
+				"items": []any{
 					map[string]any{
-						"type":      "primary",
-						"formatted": "123 Main St",
+						"type": "aaa",
+						"str":  "xxx_abc",
 					},
 					map[string]any{
-						"type":      "primary",
-						"formatted": "123 Side St",
+						"type": "aaa",
+						"str":  "xxx_def",
 					},
 					map[string]any{
-						"type":      "other",
-						"formatted": "456 Main St",
+						"type": "baz",
+						"str":  "yyy_abc",
 					},
 				},
 			},
