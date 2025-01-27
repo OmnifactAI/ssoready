@@ -326,6 +326,42 @@ func TestPatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "replace with ends-with filter expression",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "xxx_abc",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "yyy_def",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "zzz_abc",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str ew \"abc\"].type", Value: "aaa"}},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "aaa",
+						"str":  "xxx_abc",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "yyy_def",
+					},
+					map[string]any{
+						"type": "aaa",
+						"str":  "zzz_abc",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range testCases {

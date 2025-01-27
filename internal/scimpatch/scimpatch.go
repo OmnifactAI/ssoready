@@ -72,7 +72,7 @@ func applyOp(op Operation, obj *map[string]any) error {
 			if !ok {
 				return fmt.Errorf("invalid path: array not found at %q", segment.String())
 			}
-			
+
 			modified := false
 			for j, item := range arr {
 				if m, ok := item.(map[string]any); ok {
@@ -94,6 +94,12 @@ func applyOp(op Operation, obj *map[string]any) error {
 								matches = strings.HasPrefix(str, segment.filter.value)
 							} else {
 								return fmt.Errorf("'sw' operator can only be used with string values")
+							}
+						case "ew":
+							if str, ok := v.(string); ok {
+								matches = strings.HasSuffix(str, segment.filter.value)
+							} else {
+								return fmt.Errorf("'ew' operator can only be used with string values")
 							}
 						default:
 							return fmt.Errorf("unsupported filter operator: %q", segment.filter.op)
