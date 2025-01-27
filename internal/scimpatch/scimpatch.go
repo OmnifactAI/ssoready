@@ -266,10 +266,8 @@ func splitPath(path string) []pathSegment {
 		return []pathSegment{{name: enterpriseUserPrefix}}
 	}
 	if strings.HasPrefix(path, enterpriseUserPrefix+":") {
-		return []pathSegment{
-			{name: enterpriseUserPrefix},
-			{name: strings.TrimPrefix(path, enterpriseUserPrefix+":")},
-		}
+		remainingPath := strings.TrimPrefix(path, enterpriseUserPrefix+":")
+		return append([]pathSegment{{name: enterpriseUserPrefix}}, splitPath(remainingPath)...)
 	}
 
 	var segments []pathSegment

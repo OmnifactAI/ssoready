@@ -661,6 +661,38 @@ func TestPatch(t *testing.T) {
 			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[date gt \"invalid-date\"].type", Value: "xxx"}},
 			err: "invalid date format in comparison: \"invalid-date\"",
 		},
+		{
+			name: "replace with filter in enterprise user path",
+			in: map[string]any{
+				"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": map[string]any{
+					"items": []any{
+						map[string]any{
+							"type": "foo",
+							"str":  "xxx",
+						},
+						map[string]any{
+							"type": "bar",
+							"str":  "yyy",
+						},
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:items[type eq \"bar\"].str", Value: "zzz"}},
+			out: map[string]any{
+				"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": map[string]any{
+					"items": []any{
+						map[string]any{
+							"type": "foo",
+							"str":  "xxx",
+						},
+						map[string]any{
+							"type": "bar",
+							"str":  "zzz",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range testCases {
