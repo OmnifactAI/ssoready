@@ -609,6 +609,58 @@ func TestPatch(t *testing.T) {
 			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[val gt \"true\"].type", Value: "xxx"}},
 			err: "comparison operators can only be used with string or numeric values",
 		},
+		{
+			name: "replace with comparison operators on dates",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"date": "2024-01-01T00:00:00Z",
+					},
+					map[string]any{
+						"type": "bar",
+						"date": "2024-02-01T00:00:00Z",
+					},
+					map[string]any{
+						"type": "baz",
+						"date": "2024-03-01T00:00:00Z",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{
+				{Op: "Replace", Path: "items[date gt \"2024-02-01T00:00:00Z\"].type", Value: "xxx"},
+				{Op: "Replace", Path: "items[date lt \"2024-02-01T00:00:00Z\"].type", Value: "yyy"},
+			},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "yyy",
+						"date": "2024-01-01T00:00:00Z",
+					},
+					map[string]any{
+						"type": "bar",
+						"date": "2024-02-01T00:00:00Z",
+					},
+					map[string]any{
+						"type": "xxx",
+						"date": "2024-03-01T00:00:00Z",
+					},
+				},
+			},
+		},
+		{
+			name: "comparison operators with invalid date format should fail",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"date": "2024-01-01T00:00:00Z",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[date gt \"invalid-date\"].type", Value: "xxx"}},
+			err: "invalid date format in comparison: \"invalid-date\"",
+		},
 	}
 
 	for _, tt := range testCases {

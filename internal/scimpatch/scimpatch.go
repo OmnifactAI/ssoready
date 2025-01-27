@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Operation struct {
@@ -111,19 +112,28 @@ func applyOp(op Operation, obj *map[string]any) error {
 						case "gt", "ge", "lt", "le":
 							switch val := v.(type) {
 							case string:
-								matches = compareStrings(val, segment.filter.value, segment.filter.op)
+								// Try to parse as date first
+								if date, err := time.Parse(time.RFC3339, val); err == nil {
+									compareDate, err := time.Parse(time.RFC3339, segment.filter.value)
+									if err != nil {
+										return fmt.Errorf("invalid date format in comparison: %q", segment.filter.value)
+									}
+									matches = compareDates(date, compareDate, segment.filter.op)
+								} else {
+									matches = compare(val, segment.filter.value, segment.filter.op)
+								}
 							case float64:
 								num, err := strconv.ParseFloat(segment.filter.value, 64)
 								if err != nil {
 									return fmt.Errorf("invalid number in comparison: %q", segment.filter.value)
 								}
-								matches = compareNumbers(val, num, segment.filter.op)
+								matches = compare(val, num, segment.filter.op)
 							case int:
 								num, err := strconv.ParseFloat(segment.filter.value, 64)
 								if err != nil {
 									return fmt.Errorf("invalid number in comparison: %q", segment.filter.value)
 								}
-								matches = compareNumbers(float64(val), num, segment.filter.op)
+								matches = compare(float64(val), num, segment.filter.op)
 							default:
 								return fmt.Errorf("comparison operators can only be used with string or numeric values")
 							}
@@ -308,7 +318,12 @@ func segmentsToStrings(segments []pathSegment) []string {
 	return result
 }
 
-func compareStrings(a, b, op string) bool {
+// comparable is a constraint that permits ordered comparisons
+type ordered interface {
+	~string | ~float64 | ~int
+}
+
+func compare[T ordered](a, b T, op string) bool {
 	switch op {
 	case "gt":
 		return a > b
@@ -323,16 +338,16 @@ func compareStrings(a, b, op string) bool {
 	}
 }
 
-func compareNumbers(a, b float64, op string) bool {
+func compareDates(a, b time.Time, op string) bool {
 	switch op {
 	case "gt":
-		return a > b
+		return a.After(b)
 	case "ge":
-		return a >= b
+		return a.After(b) || a.Equal(b)
 	case "lt":
-		return a < b
+		return a.Before(b)
 	case "le":
-		return a <= b
+		return a.Before(b) || a.Equal(b)
 	default:
 		return false
 	}
