@@ -2,6 +2,7 @@ package scimpatch
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -106,6 +107,25 @@ func applyOp(op Operation, obj *map[string]any) error {
 								matches = str != ""
 							} else {
 								matches = v != nil
+							}
+						case "gt", "ge", "lt", "le":
+							switch val := v.(type) {
+							case string:
+								matches = compareStrings(val, segment.filter.value, segment.filter.op)
+							case float64:
+								num, err := strconv.ParseFloat(segment.filter.value, 64)
+								if err != nil {
+									return fmt.Errorf("invalid number in comparison: %q", segment.filter.value)
+								}
+								matches = compareNumbers(val, num, segment.filter.op)
+							case int:
+								num, err := strconv.ParseFloat(segment.filter.value, 64)
+								if err != nil {
+									return fmt.Errorf("invalid number in comparison: %q", segment.filter.value)
+								}
+								matches = compareNumbers(float64(val), num, segment.filter.op)
+							default:
+								return fmt.Errorf("comparison operators can only be used with string or numeric values")
 							}
 						default:
 							return fmt.Errorf("unsupported filter operator: %q", segment.filter.op)
@@ -286,4 +306,34 @@ func segmentsToStrings(segments []pathSegment) []string {
 		result[i] = seg.String()
 	}
 	return result
+}
+
+func compareStrings(a, b, op string) bool {
+	switch op {
+	case "gt":
+		return a > b
+	case "ge":
+		return a >= b
+	case "lt":
+		return a < b
+	case "le":
+		return a <= b
+	default:
+		return false
+	}
+}
+
+func compareNumbers(a, b float64, op string) bool {
+	switch op {
+	case "gt":
+		return a > b
+	case "ge":
+		return a >= b
+	case "lt":
+		return a < b
+	case "le":
+		return a <= b
+	default:
+		return false
+	}
 }

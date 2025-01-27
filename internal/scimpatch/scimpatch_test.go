@@ -13,6 +13,7 @@ func TestPatch(t *testing.T) {
 		in   map[string]any
 		ops  []scimpatch.Operation
 		out  map[string]any
+		err  string
 	}{
 		{
 			name: "replace entire value",
@@ -412,13 +413,213 @@ func TestPatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "replace with greater than filter expression on strings",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "zzz",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str gt \"mmm\"].type", Value: "xxx"}},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "xxx",
+						"str":  "zzz",
+					},
+				},
+			},
+		},
+		{
+			name: "replace with greater than or equal filter expression on strings",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "zzz",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str ge \"mmm\"].type", Value: "xxx"}},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "xxx",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "xxx",
+						"str":  "zzz",
+					},
+				},
+			},
+		},
+		{
+			name: "replace with less than filter expression on strings",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "zzz",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str lt \"mmm\"].type", Value: "xxx"}},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "xxx",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "zzz",
+					},
+				},
+			},
+		},
+		{
+			name: "replace with less than or equal filter expression on strings",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "bar",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "zzz",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[str le \"mmm\"].type", Value: "xxx"}},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "xxx",
+						"str":  "aaa",
+					},
+					map[string]any{
+						"type": "xxx",
+						"str":  "mmm",
+					},
+					map[string]any{
+						"type": "baz",
+						"str":  "zzz",
+					},
+				},
+			},
+		},
+		{
+			name: "replace with comparison operators on numbers",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"num":  10,
+					},
+					map[string]any{
+						"type": "bar",
+						"num":  20,
+					},
+					map[string]any{
+						"type": "baz",
+						"num":  30,
+					},
+				},
+			},
+			ops: []scimpatch.Operation{
+				{Op: "Replace", Path: "items[num gt \"20\"].type", Value: "xxx"},
+				{Op: "Replace", Path: "items[num lt \"20\"].type", Value: "yyy"},
+			},
+			out: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "yyy",
+						"num":  10,
+					},
+					map[string]any{
+						"type": "bar",
+						"num":  20,
+					},
+					map[string]any{
+						"type": "xxx",
+						"num":  30,
+					},
+				},
+			},
+		},
+		{
+			name: "comparison operators with invalid types should fail",
+			in: map[string]any{
+				"items": []any{
+					map[string]any{
+						"type": "foo",
+						"val":  true,
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{Op: "Replace", Path: "items[val gt \"true\"].type", Value: "xxx"}},
+			err: "comparison operators can only be used with string or numeric values",
+		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			err := scimpatch.Patch(tt.ops, &tt.in)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.out, tt.in)
+			if tt.err != "" {
+				assert.Error(t, err, tt.err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.out, tt.in)
+			}
 		})
 	}
 }
