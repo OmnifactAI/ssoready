@@ -1,0 +1,1 @@
+ALTER TABLE scim_users ADD COLUMN schemas text[] NOT NULL DEFAULT '{}'::text[]; 

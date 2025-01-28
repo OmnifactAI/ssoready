@@ -665,17 +665,19 @@ where scim_directory_id = $1
   and id = $2;
 
 -- name: AuthUpsertSCIMUser :one
-insert into scim_users (id, scim_directory_id, email, deleted, attributes)
-values ($1, $2, $3, $4, $5)
+insert into scim_users (id, scim_directory_id, email, deleted, attributes, schemas)
+values ($1, $2, $3, $4, $5, $6)
 on conflict (scim_directory_id, email) do update set deleted    = excluded.deleted,
-                                                     attributes = excluded.attributes
+                                                     attributes = excluded.attributes,
+                                                     schemas    = excluded.schemas
 returning *;
 
 -- name: AuthUpdateSCIMUser :one
 update scim_users
 set email      = $1,
     attributes = $2,
-    deleted    = $5
+    deleted    = $5,
+    schemas    = $6
 where scim_directory_id = $3
   and id = $4
 returning *;

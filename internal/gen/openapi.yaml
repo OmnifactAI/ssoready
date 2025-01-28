@@ -984,6 +984,16 @@ components:
 
                          Typically, these `attributes` are used to pass along the user's first/last name, or whether they should be
                          considered an admin within their company.
+                schemas:
+                    type: array
+                    items:
+                        type: string
+                    description: |-
+                        The SCIM schemas associated with this user.
+
+                         These are typically URNs like "urn:ietf:params:scim:schemas:core:2.0:User" or
+                         "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User" that indicate what attributes are available
+                         on the user.
         Status:
             type: object
             properties:

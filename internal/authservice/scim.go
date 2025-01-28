@@ -181,6 +181,15 @@ func (s *Service) scimCreateUser(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	userName := resource["userName"].(string) // todo this may panic
+
+	// Extract schemas before removing them from attributes
+	schemas, _ := resource["schemas"].([]any)
+	var schemaStrings []string
+	for _, schema := range schemas {
+		if schemaStr, ok := schema.(string); ok {
+			schemaStrings = append(schemaStrings, schemaStr)
+		}
+	}
 	delete(resource, "schemas")
 
 	emailDomain, err := emailaddr.Parse(userName)
@@ -226,6 +235,7 @@ func (s *Service) scimCreateUser(w http.ResponseWriter, r *http.Request) error {
 			Email:           userName,
 			Deleted:         false,
 			Attributes:      attributes,
+			Schemas:         schemaStrings,
 		},
 	})
 	if err != nil {
@@ -236,7 +246,6 @@ func (s *Service) scimCreateUser(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusCreated)
 
 	response := scimUserToResource(scimUser.SCIMUser)
-	response["schemas"] = []string{"urn:ietf:params:scim:schemas:core:2.0:User"}
 
 	w.Header().Set("Content-Type", "application/scim+json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -262,6 +271,14 @@ func (s *Service) scimUpdateUser(w http.ResponseWriter, r *http.Request) error {
 		active = resource["active"].(bool)
 	}
 
+	// Extract schemas before removing them from attributes
+	schemas, _ := resource["schemas"].([]any)
+	var schemaStrings []string
+	for _, schema := range schemas {
+		if schemaStr, ok := schema.(string); ok {
+			schemaStrings = append(schemaStrings, schemaStr)
+		}
+	}
 	delete(resource, "schemas")
 
 	// at this point, all remaining properties are user attributes
@@ -308,6 +325,7 @@ func (s *Service) scimUpdateUser(w http.ResponseWriter, r *http.Request) error {
 			Email:           userName,
 			Deleted:         !active,
 			Attributes:      attributes,
+			Schemas:         schemaStrings,
 		},
 	})
 	if err != nil {
@@ -318,7 +336,6 @@ func (s *Service) scimUpdateUser(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusOK)
 
 	response := scimUserToResource(scimUser.SCIMUser)
-	response["schemas"] = []string{"urn:ietf:params:scim:schemas:core:2.0:User"}
 
 	w.Header().Set("Content-Type", "application/scim+json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -783,13 +800,29 @@ func scimUserToResource(scimUser *ssoreadyv1.SCIMUser) map[string]any {
 		r["active"] = false
 	}
 
+	// Add schemas from the user object, falling back to the default schema if none are stored
+	if len(scimUser.Schemas) > 0 {
+		r["schemas"] = scimUser.Schemas
+	} else {
+		r["schemas"] = []string{"urn:ietf:params:scim:schemas:core:2.0:User"}
+	}
+
 	return r
 }
 
 func scimUserFromResource(scimDirectoryID, scimUserID string, r map[string]any) *ssoreadyv1.SCIMUser {
+	// Extract schemas before removing them from attributes
+	schemas, _ := r["schemas"].([]any)
+	var schemaStrings []string
+	for _, schema := range schemas {
+		if schemaStr, ok := schema.(string); ok {
+			schemaStrings = append(schemaStrings, schemaStr)
+		}
+	}
+	delete(r, "schemas")
+
 	// if included, id and schemas are not attributes
 	delete(r, "id")
-	delete(r, "schemas")
 
 	// normalize Entra-style "active" property
 	if r["active"] == "True" {
@@ -813,6 +846,7 @@ func scimUserFromResource(scimDirectoryID, scimUserID string, r map[string]any) 
 		Email:           email,
 		Deleted:         !active,
 		Attributes:      attrs,
+		Schemas:         schemaStrings,
 	}
 }
 
