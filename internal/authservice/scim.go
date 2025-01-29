@@ -356,7 +356,17 @@ func (s *Service) scimPatchUser(w http.ResponseWriter, r *http.Request) error {
 
 	// apply patches
 	if err := scimpatch.Patch(patch.Operations, &scimUserResource); err != nil {
-		http.Error(w, fmt.Sprintf("unsupported PATCH operation: %s", err.Error()), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/scim+json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorResponse := map[string]interface{}{
+			"schemas":  []string{"urn:ietf:params:scim:api:messages:2.0:Error"},
+			"status":   "400",
+			"scimType": "invalidPath",
+			"detail":   fmt.Sprintf("Unsupported PATCH operation: %s", err.Error()),
+		}
+		if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
+			panic(fmt.Errorf("encode error response: %w", err))
+		}
 		return nil
 	}
 
@@ -452,9 +462,27 @@ func (s *Service) scimListGroups(w http.ResponseWriter, r *http.Request) error {
 		startIndex = i - 1 // scim is 1-indexed, store is 0-indexed
 	}
 
+	var filterDisplayName string
+	if r.URL.Query().Has("filter") {
+		filterDisplayNamePat := regexp.MustCompile(`displayName eq "(.*)"`)
+		match := filterDisplayNamePat.FindStringSubmatch(r.URL.Query().Get("filter"))
+		if match == nil {
+			panic("unsupported filter param")
+		}
+
+		filterDisplayName = match[1]
+	}
+
 	scimGroups, err := s.Store.AuthListSCIMGroups(ctx, &store.AuthListSCIMGroupsRequest{
 		SCIMDirectoryID: scimDirectoryID,
 		StartIndex:      startIndex,
+
+		// Unlike ListUsers, which uses a separate query to list users by email
+		// (an operation that's guaranteed to return only one value), ListGroups
+		// here instead does a more traditional filter, because we do not
+		// enforce group uniqueness by displayName. Multiple values may be
+		// returned even if FilterDisplayName is set.
+		FilterDisplayName: filterDisplayName,
 	})
 	if err != nil {
 		panic(fmt.Errorf("store: %w", err))
