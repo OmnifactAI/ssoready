@@ -949,24 +949,24 @@ func TestPatch(t *testing.T) {
 				{
 					Op:    "Add",
 					Path:  "name.givenName",
-					Value: "Alex",
+					Value: "John",
 				},
 				{
 					Op:    "Add",
 					Path:  "name.familyName",
-					Value: "Augustin",
+					Value: "Doe",
 				},
 				{
 					Op:    "Add",
 					Path:  "name.formatted",
-					Value: "Alex Augustin",
+					Value: "John Doe",
 				},
 			},
 			out: map[string]any{
 				"name": map[string]any{
-					"givenName":  "Alex",
-					"familyName": "Augustin",
-					"formatted":  "Alex Augustin",
+					"givenName":  "John",
+					"familyName": "Doe",
+					"formatted":  "John Doe",
 				},
 			},
 		},
@@ -997,7 +997,7 @@ func TestPatch(t *testing.T) {
 				{
 					Op:    "Replace",
 					Path:  "name.givenName",
-					Value: "Alex",
+					Value: "John",
 				},
 			},
 			err: `invalid path: "name.givenName"`,
