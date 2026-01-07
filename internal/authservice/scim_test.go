@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	ssoreadyv1 "github.com/ssoready/ssoready/internal/gen/ssoready/v1"
+	"github.com/ssoready/ssoready/internal/scimpatch"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -154,6 +156,104 @@ func TestSCIMFilterRegex(t *testing.T) {
 			} else {
 				assert.Nil(t, match, "Expected filter to not match but it did")
 			}
+		})
+	}
+}
+
+func TestSCIMPatchUser_NestedProperties(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          *ssoreadyv1.SCIMUser
+		patchOps       []scimpatch.Operation
+		expectedResult map[string]any
+	}{
+		{
+			name: "add nested name properties when parent doesn't exist",
+			input: &ssoreadyv1.SCIMUser{
+				Id:    "user123",
+				Email: "test@example.com",
+				Attributes: mustNewStruct(map[string]any{
+					"displayName": "Test User",
+				}),
+			},
+			patchOps: []scimpatch.Operation{
+				{Op: "Replace", Path: "displayName", Value: "John Doe (Changed)"},
+				{Op: "Add", Path: "name.givenName", Value: "John"},
+				{Op: "Add", Path: "name.familyName", Value: "Doe"},
+				{Op: "Add", Path: "name.formatted", Value: "John Doe"},
+			},
+			expectedResult: map[string]any{
+				"id":          "user123",
+				"userName":    "test@example.com",
+				"displayName": "John Doe (Changed)",
+				"name": map[string]any{
+					"givenName":  "John",
+					"familyName": "Doe",
+					"formatted":  "John Doe",
+				},
+			},
+		},
+		{
+			name: "add nested properties to existing parent object",
+			input: &ssoreadyv1.SCIMUser{
+				Id:    "user456",
+				Email: "user@example.com",
+				Attributes: mustNewStruct(map[string]any{
+					"name": map[string]any{
+						"givenName": "John",
+					},
+				}),
+			},
+			patchOps: []scimpatch.Operation{
+				{Op: "Add", Path: "name.familyName", Value: "Doe"},
+				{Op: "Add", Path: "name.formatted", Value: "John Doe"},
+			},
+			expectedResult: map[string]any{
+				"id":       "user456",
+				"userName": "user@example.com",
+				"name": map[string]any{
+					"givenName":  "John",
+					"familyName": "Doe",
+					"formatted":  "John Doe",
+				},
+			},
+		},
+		{
+			name: "deeply nested property creation with filter expressions",
+			input: &ssoreadyv1.SCIMUser{
+				Id:         "user789",
+				Email:      "deep@example.com",
+				Attributes: mustNewStruct(map[string]any{}),
+			},
+			patchOps: []scimpatch.Operation{
+				{Op: "Add", Path: "addresses[type eq \"work\"].streetAddress", Value: "123 Main St"},
+				{Op: "Add", Path: "addresses[type eq \"work\"].locality", Value: "San Francisco"},
+			},
+			expectedResult: map[string]any{
+				"id":       "user789",
+				"userName": "deep@example.com",
+				"addresses": []any{
+					map[string]any{
+						"type":          "work",
+						"streetAddress": "123 Main St",
+						"locality":      "San Francisco",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Convert SCIMUser to resource
+			resource := scimUserToResource(tt.input)
+
+			// Apply patch operations using scimpatch
+			err := scimpatch.Patch(tt.patchOps, &resource)
+			require.NoError(t, err, "patch should succeed")
+
+			// Verify the result matches expected
+			assert.Equal(t, tt.expectedResult, resource)
 		})
 	}
 }
