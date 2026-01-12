@@ -39,6 +39,61 @@ func TestSCIMUserToResource_ManagerReference(t *testing.T) {
 			},
 		},
 		{
+			name: "realistic user with full enterprise attributes and manager",
+			input: &ssoreadyv1.SCIMUser{
+				Id:    "scim_user_6ytool3syktvl99vb3ingqzqi",
+				Email: "karstaedt@sport-thieme.de",
+				Attributes: mustNewStruct(map[string]any{
+					"active": true,
+					"displayName": "Nikolas Karstaedt",
+					"emails": []any{
+						map[string]any{
+							"primary": true,
+							"type":    "work",
+							"value":   "karstaedt@sport-thieme.de",
+						},
+					},
+					"externalId": "karstaedt",
+					"name": map[string]any{
+						"familyName": "Karstaedt",
+						"formatted":  "Nikolas Karstaedt",
+						"givenName":  "Nikolas",
+					},
+					"title": "Business Intelligence Entwickler",
+					"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": map[string]any{
+						"department": "Business Intelligence",
+						"manager":    "scim_user_cldgopimpfk79l2lwlyammhck",
+					},
+				}),
+			},
+			expected: map[string]any{
+				"id":       "scim_user_6ytool3syktvl99vb3ingqzqi",
+				"userName": "karstaedt@sport-thieme.de",
+				"active":   true,
+				"displayName": "Nikolas Karstaedt",
+				"emails": []any{
+					map[string]any{
+						"primary": true,
+						"type":    "work",
+						"value":   "karstaedt@sport-thieme.de",
+					},
+				},
+				"externalId": "karstaedt",
+				"name": map[string]any{
+					"familyName": "Karstaedt",
+					"formatted":  "Nikolas Karstaedt",
+					"givenName":  "Nikolas",
+				},
+				"title": "Business Intelligence Entwickler",
+				"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": map[string]any{
+					"department": "Business Intelligence",
+					"manager": map[string]any{
+						"value": "scim_user_cldgopimpfk79l2lwlyammhck",
+					},
+				},
+			},
+		},
+		{
 			name: "already complex manager reference is preserved",
 			input: &ssoreadyv1.SCIMUser{
 				Id:    "user123",
