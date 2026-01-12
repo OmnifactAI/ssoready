@@ -85,9 +85,7 @@ func (s *Service) scimListUsers(w http.ResponseWriter, r *http.Request) error {
 			panic(err)
 		}
 
-		resource := scimUser.Attributes.AsMap()
-		resource["id"] = scimUser.Id
-		resource["userName"] = scimUser.Email
+		resource := scimUserToResource(scimUser)
 
 		w.Header().Set("Content-Type", "application/scim+json")
 		w.WriteHeader(http.StatusOK)
