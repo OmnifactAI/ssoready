@@ -530,6 +530,53 @@ func TestSCIMUserFromResource(t *testing.T) {
 	}
 }
 
+func TestEmailDomainExtraction(t *testing.T) {
+	tests := []struct {
+		name           string
+		email          string
+		expectedDomain string
+		expectError    bool
+	}{
+		{
+			name:           "lowercase domain",
+			email:          "user@example.com",
+			expectedDomain: "example.com",
+			expectError:    false,
+		},
+		{
+			name:           "mixed case domain - extracted as lowercase",
+			email:          "alex@OmnifactGmbH.onmicrosoft.com",
+			expectedDomain: "omnifactgmbh.onmicrosoft.com",
+			expectError:    false,
+		},
+		{
+			name:           "uppercase domain - extracted as lowercase",
+			email:          "user@EXAMPLE.COM",
+			expectedDomain: "example.com",
+			expectError:    false,
+		},
+		{
+			name:           "subdomain with mixed case",
+			email:          "user@Mail.Example.COM",
+			expectedDomain: "mail.example.com",
+			expectError:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			domain, err := emailaddr.Parse(tt.email)
+
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedDomain, domain, "Domain should be extracted as lowercase")
+			}
+		})
+	}
+}
+
 func TestEmailFormatDetection(t *testing.T) {
 	tests := []struct {
 		name        string

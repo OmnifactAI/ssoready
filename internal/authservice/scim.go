@@ -269,7 +269,7 @@ func (s *Service) scimCreateUser(w http.ResponseWriter, r *http.Request) error {
 
 	var domainOk bool
 	for _, domain := range allowedDomains {
-		if emailDomain == domain {
+		if emailDomain == strings.ToLower(domain) {
 			domainOk = true
 		}
 	}
@@ -371,7 +371,7 @@ func (s *Service) scimUpdateUser(w http.ResponseWriter, r *http.Request) error {
 
 	var domainOk bool
 	for _, domain := range allowedDomains {
-		if emailDomain == domain {
+		if emailDomain == strings.ToLower(domain) {
 			domainOk = true
 		}
 	}
@@ -482,7 +482,7 @@ func (s *Service) scimPatchUser(w http.ResponseWriter, r *http.Request) error {
 
 	var domainOk bool
 	for _, domain := range allowedDomains {
-		if emailDomain == domain {
+		if emailDomain == strings.ToLower(domain) {
 			domainOk = true
 		}
 	}
