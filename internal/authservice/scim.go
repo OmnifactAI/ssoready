@@ -56,6 +56,7 @@ func (s *Service) scimListUsers(w http.ResponseWriter, r *http.Request) error {
 			panic("unsupported filter param")
 		}
 
+		// scimvalidator.microsoft.com sends url-encoded values; harmless to "normal" emails to url-parse them
 		filterField := match[1]
 		filterValue, err := url.QueryUnescape(match[2])
 		if err != nil {
@@ -895,7 +896,7 @@ func (s *Service) scimPatchGroup(w http.ResponseWriter, r *http.Request) error {
 func scimUserToResource(scimUser *ssoreadyv1.SCIMUser) map[string]any {
 	r := scimUser.Attributes.AsMap()
 	r["id"] = scimUser.Id
-	
+
 	// userName is stored in attributes. If not present, fallback to email for backward compatibility
 	if _, ok := r["userName"]; !ok {
 		r["userName"] = scimUser.Email
