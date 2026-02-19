@@ -1,6 +1,7 @@
 package scimpatch
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -89,11 +90,16 @@ func applyOp(op Operation, obj *map[string]any) error {
 	// Regular path handling (non-enterprise user schema)
 	if len(segments) == 0 {
 		if opReplace {
-			val, ok := op.Value.(map[string]any)
-			if !ok {
-				return fmt.Errorf("top-level 'replace' operation must have an object value")
+			val, err := topLevelObjectValue(op.Value)
+			if err != nil {
+				return err
 			}
-			*obj = val
+
+			// RFC 7644 allows `replace` without a path to provide a set of
+			// attributes to replace on the target resource.
+			for k, v := range val {
+				applyTopLevelReplaceAttribute(*obj, k, v)
+			}
 			return nil
 		}
 		if opAdd {
@@ -297,6 +303,57 @@ func applyAdd(obj map[string]any, k string, v any) error {
 	default:
 		obj[k] = v
 		return nil
+	}
+}
+
+func topLevelObjectValue(v any) (map[string]any, error) {
+	if m, ok := v.(map[string]any); ok {
+		return m, nil
+	}
+
+	// Some providers send a JSON object as a string-valued PATCH value.
+	// Accept that form for compatibility.
+	s, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("top-level 'replace' operation must have an object value")
+	}
+
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil, fmt.Errorf("top-level 'replace' operation must have an object value")
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(s), &parsed); err != nil {
+		return nil, fmt.Errorf("top-level 'replace' operation must have an object value")
+	}
+	if parsed == nil {
+		return nil, fmt.Errorf("top-level 'replace' operation must have an object value")
+	}
+	return parsed, nil
+}
+
+func applyTopLevelReplaceAttribute(obj map[string]any, key string, incoming any) {
+	// Compatibility behavior: when replacing top-level attributes with an
+	// object value, merge recursively instead of dropping existing siblings.
+	if existing, ok := obj[key].(map[string]any); ok {
+		if incomingMap, ok := incoming.(map[string]any); ok {
+			deepMergeMaps(existing, incomingMap)
+			return
+		}
+	}
+	obj[key] = incoming
+}
+
+func deepMergeMaps(dst map[string]any, src map[string]any) {
+	for key, srcVal := range src {
+		if dstMap, ok := dst[key].(map[string]any); ok {
+			if srcMap, ok := srcVal.(map[string]any); ok {
+				deepMergeMaps(dstMap, srcMap)
+				continue
+			}
+		}
+		dst[key] = srcVal
 	}
 }
 
