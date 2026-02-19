@@ -17,16 +17,108 @@ func TestPatch(t *testing.T) {
 		err  string
 	}{
 		{
-			name: "replace entire value",
+			name: "replace top-level attributes with empty path",
 			in:   map[string]any{"foo": "xxx"},
 			ops:  []scimpatch.Operation{{Op: "replace", Path: "", Value: map[string]any{"bar": "yyy"}}},
-			out:  map[string]any{"bar": "yyy"},
+			out:  map[string]any{"foo": "xxx", "bar": "yyy"},
 		},
 		{
 			name: "replace entire value with non-object",
 			in:   map[string]any{"foo": "xxx"},
 			ops:  []scimpatch.Operation{{Op: "replace", Path: "", Value: "notanobject"}},
 			err:  "top-level 'replace' operation must have an object value",
+		},
+		{
+			name: "replace top-level attributes with empty path and stringified object value",
+			in: map[string]any{
+				"userName": "old@example.com",
+				"name": map[string]any{
+					"givenName": "Old",
+					"nested": map[string]any{
+						"keep": "value",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{
+				Op:   "replace",
+				Path: "",
+				Value: "{\"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"]," +
+					"\"name\":{\"familyName\":\"Test-V3\"}}",
+			}},
+			out: map[string]any{
+				"userName": "old@example.com",
+				"schemas":  []any{"urn:ietf:params:scim:schemas:core:2.0:User"},
+				"name": map[string]any{
+					"familyName": "Test-V3",
+					"givenName":  "Old",
+					"nested": map[string]any{
+						"keep": "value",
+					},
+				},
+			},
+		},
+		{
+			name: "replace top-level attributes with empty path and object value",
+			in: map[string]any{
+				"userName": "old@example.com",
+				"name": map[string]any{
+					"givenName": "Old",
+					"nested": map[string]any{
+						"keep": "value",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{
+				Op:   "replace",
+				Path: "",
+				Value: map[string]any{
+					"schemas": []any{"urn:ietf:params:scim:schemas:core:2.0:User"},
+					"name": map[string]any{
+						"familyName": "Test-V3",
+					},
+				},
+			}},
+			out: map[string]any{
+				"userName": "old@example.com",
+				"schemas":  []any{"urn:ietf:params:scim:schemas:core:2.0:User"},
+				"name": map[string]any{
+					"familyName": "Test-V3",
+					"givenName":  "Old",
+					"nested": map[string]any{
+						"keep": "value",
+					},
+				},
+			},
+		},
+		{
+			name: "replace top-level attributes deep merges nested maps",
+			in: map[string]any{
+				"profile": map[string]any{
+					"name": map[string]any{
+						"givenName": "Old",
+						"familyName": "Value",
+					},
+				},
+			},
+			ops: []scimpatch.Operation{{
+				Op:   "replace",
+				Path: "",
+				Value: map[string]any{
+					"profile": map[string]any{
+						"name": map[string]any{
+							"familyName": "New",
+						},
+					},
+				},
+			}},
+			out: map[string]any{
+				"profile": map[string]any{
+					"name": map[string]any{
+						"givenName":  "Old",
+						"familyName": "New",
+					},
+				},
+			},
 		},
 		{
 			name: "replace top-level prop",
@@ -96,7 +188,7 @@ func TestPatch(t *testing.T) {
 			name: "uppercase Replace op",
 			in:   map[string]any{"foo": "xxx"},
 			ops:  []scimpatch.Operation{{Op: "Replace", Path: "", Value: map[string]any{"bar": "yyy"}}},
-			out:  map[string]any{"bar": "yyy"},
+			out:  map[string]any{"foo": "xxx", "bar": "yyy"},
 		},
 		{
 			name: "uppercase Add op",
