@@ -80,7 +80,7 @@ This section covers how to run SSOReady locally for development purposes.
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (see `.nvmrc` for version) - For the frontend apps (App and Admin)
-- [Go](https://golang.org/) 1.21+ - For the backend services (API and Auth)
+- [Go](https://golang.org/) 1.26+ - For the backend services (API and Auth)
 - [Docker](https://www.docker.com/) & Docker Compose - For running PostgreSQL locally
 - [PostgreSQL](https://www.postgresql.org/) 15+ (via Docker)
 
