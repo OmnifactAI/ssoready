@@ -1,8 +1,10 @@
-# Builds the five SSOReady images, scans them, and publishes them to Docker Hub
-# as omnifact/ssoready-<name>:<short commit sha>.
+# Runs the Go tests, then builds the five SSOReady images, scans them, and
+# publishes them to Docker Hub as omnifact/ssoready-<name>:<short commit sha>.
 #
-# - Pull requests: build and scan only.
-# - Pushes to main (and manual runs on main): build, scan, then push.
+# - Pull requests: test, build and scan only.
+# - Pushes to main: test, build, scan, then push.
+# - Manual runs (any branch): test, build, scan, then push. Use this to try a
+#   branch on the dev stack before merging it.
 #
 # The scan fails on any critical or high vulnerability that has a fix, so an
 # image with known, fixable issues is never published. Base images are pinned
@@ -32,8 +34,27 @@ env:
   TRIVY_IMAGE: aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c
 
 jobs:
+  test:
+    name: go test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      # Test with the same Go toolchain the images are built with: the build
+      # stage of the api Dockerfile, which holds go.mod, cmd and internal.
+      - name: Build test image
+        run: docker build --platform linux/amd64 --target build -f ./cmd/api/Dockerfile -t ssoready-go-build .
+
+      - name: Test
+        run: docker run --rm -e CGO_ENABLED=0 ssoready-go-build go test ./...
+
   image:
     name: ${{ matrix.name }}
+    needs: test
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -57,7 +78,7 @@ jobs:
             file: ./cmd/migrate/Dockerfile
     env:
       IMAGE: omnifact/ssoready-${{ matrix.name }}
-      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+      PUBLISH: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0

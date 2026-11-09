@@ -216,14 +216,17 @@ The `tailwind-watch` process should rebuild this automatically when running `npm
 
 ### Docker images
 
-The `Images` GitHub Actions workflow (`.github/workflows/images.yaml`) builds
-the five images (`app`, `admin`, `auth`, `api`, `migrate`) and scans them with
-Trivy. It fails on any critical or high vulnerability that has a fix.
+The `Images` GitHub Actions workflow (`.github/workflows/images.yaml`) runs the
+Go tests, builds the five images (`app`, `admin`, `auth`, `api`, `migrate`) and
+scans them with Trivy. It fails on any critical or high vulnerability that has a
+fix.
 
-- Pull requests: build and scan only.
-- Pushes to `main`: build, scan, and push to Docker Hub as
+- Pull requests: test, build and scan only.
+- Pushes to `main`: test, build, scan, and push to Docker Hub as
   `omnifact/ssoready-<name>:<short commit sha>`. Existing tags are never
   overwritten.
+- Manual runs (Actions → Images → Run workflow) do the same for any branch.
+  Use them to try a branch on the dev stack before merging.
 
 Do not build or push images by hand. To deploy a new build, set `imageTag` to
 the new short commit sha in the Omnifact Pulumi config.
