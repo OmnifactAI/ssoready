@@ -214,6 +214,30 @@ The `tailwind-watch` process should rebuild this automatically when running `npm
 3. Test your changes in the browser
 4. Check terminal output for any errors
 
+### Docker images
+
+The `Images` GitHub Actions workflow (`.github/workflows/images.yaml`) builds
+the five images (`app`, `admin`, `auth`, `api`, `migrate`) and scans them with
+Trivy. It fails on any critical or high vulnerability that has a fix.
+
+- Pull requests: build and scan only.
+- Pushes to `main`: build, scan, and push to Docker Hub as
+  `omnifact/ssoready-<name>:<short commit sha>`. Existing tags are never
+  overwritten.
+
+Do not build or push images by hand. To deploy a new build, set `imageTag` to
+the new short commit sha in the Omnifact Pulumi config.
+
+Base images are pinned by digest. Dependabot (`.github/dependabot.yml`) opens
+weekly PRs for new base image digests, the runtime packages in `app/serve` and
+`admin/serve`, Go modules, and GitHub Actions. Merging one publishes new images.
+
+To build an image locally, for example the app:
+
+```bash
+docker build --platform linux/amd64 -t ssoready-app:local ./app
+```
+
 ## How SSOReady works
 
 This section provides a high-level overview of how SSOReady works, and how it's possible to implement SAML and SCIM in

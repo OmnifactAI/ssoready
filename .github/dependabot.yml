@@ -1,0 +1,43 @@
+# Keeps everything that ships in the published images current. Merging an
+# update triggers .github/workflows/images.yaml, which rebuilds, scans and
+# publishes new images.
+version: 2
+updates:
+  # Base images (pinned by digest in the Dockerfiles).
+  - package-ecosystem: docker
+    directories:
+      - /app
+      - /admin
+      - /cmd/auth
+      - /cmd/api
+      - /cmd/migrate
+    schedule:
+      interval: weekly
+    groups:
+      base-images:
+        patterns: ['*']
+
+  # Runtime dependencies of the app and admin images (bin/serve-public).
+  - package-ecosystem: npm
+    directories:
+      - /app/serve
+      - /admin/serve
+    schedule:
+      interval: weekly
+    groups:
+      serve:
+        patterns: ['*']
+
+  # Go modules compiled into the auth, api and migrate binaries.
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      go-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

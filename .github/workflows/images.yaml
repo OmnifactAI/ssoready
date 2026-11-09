@@ -1,0 +1,101 @@
+# Builds the five SSOReady images, scans them, and publishes them to Docker Hub
+# as omnifact/ssoready-<name>:<short commit sha>.
+#
+# - Pull requests: build and scan only.
+# - Pushes to main (and manual runs on main): build, scan, then push.
+#
+# The scan fails on any critical or high vulnerability that has a fix, so an
+# image with known, fixable issues is never published. Base images are pinned
+# by digest and kept current by Dependabot (.github/dependabot.yml); merging
+# its PR rebuilds and republishes the images.
+#
+# Tags are never overwritten: a tag that already exists on Docker Hub is left
+# as it is, because a deployment may already run it. Deploying a new tag is a
+# separate step (imageTag in the Omnifact Pulumi config).
+name: Images
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Pinned by digest. Update both together.
+  TRIVY_IMAGE: aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c
+
+jobs:
+  image:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: app
+            context: ./app
+            file: ./app/Dockerfile
+          - name: admin
+            context: ./admin
+            file: ./admin/Dockerfile
+          - name: auth
+            context: .
+            file: ./cmd/auth/Dockerfile
+          - name: api
+            context: .
+            file: ./cmd/api/Dockerfile
+          - name: migrate
+            context: .
+            file: ./cmd/migrate/Dockerfile
+    env:
+      IMAGE: omnifact/ssoready-${{ matrix.name }}
+      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set tag
+        run: echo "TAG=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: docker build --platform linux/amd64 --pull -f "${{ matrix.file }}" -t "$IMAGE:$TAG" "${{ matrix.context }}"
+
+      - name: Scan
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            "$TRIVY_IMAGE" image \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --no-progress \
+            "$IMAGE:$TAG"
+
+      - name: Log in to Docker Hub
+        if: env.PUBLISH == 'true'
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+      - name: Push
+        if: env.PUBLISH == 'true'
+        run: |
+          if docker manifest inspect "$IMAGE:$TAG" > /dev/null 2>&1; then
+            echo "::notice::$IMAGE:$TAG already exists on Docker Hub, not overwriting it."
+            exit 0
+          fi
+          docker push "$IMAGE:$TAG"
+          echo "Pushed \`$IMAGE:$TAG\`" >> "$GITHUB_STEP_SUMMARY"
