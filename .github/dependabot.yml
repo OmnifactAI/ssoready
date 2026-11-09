@@ -1,6 +1,11 @@
 # Keeps everything that ships in the published images current. Merging an
 # update triggers .github/workflows/images.yaml, which rebuilds, scans and
 # publishes new images.
+#
+# Checks run daily, but each ecosystem is one grouped PR: new versions update
+# the open PR instead of adding more. The cooldown skips releases younger than
+# a few days, which avoids churn and gives the ecosystem time to catch a
+# compromised release before we ship it.
 version: 2
 updates:
   # Base images (pinned by digest in the Dockerfiles).
@@ -12,7 +17,7 @@ updates:
       - /cmd/api
       - /cmd/migrate
     schedule:
-      interval: weekly
+      interval: daily
     groups:
       base-images:
         patterns: ['*']
@@ -23,7 +28,9 @@ updates:
       - /app/serve
       - /admin/serve
     schedule:
-      interval: weekly
+      interval: daily
+    cooldown:
+      default-days: 3
     groups:
       serve:
         patterns: ['*']
@@ -32,12 +39,20 @@ updates:
   - package-ecosystem: gomod
     directory: /
     schedule:
-      interval: weekly
+      interval: daily
+    cooldown:
+      default-days: 3
     groups:
       go-minor-and-patch:
         update-types: [minor, patch]
 
+  # Actions rarely change and do not ship in the images.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']

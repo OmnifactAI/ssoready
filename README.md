@@ -228,9 +228,10 @@ Trivy. It fails on any critical or high vulnerability that has a fix.
 Do not build or push images by hand. To deploy a new build, set `imageTag` to
 the new short commit sha in the Omnifact Pulumi config.
 
-Base images are pinned by digest. Dependabot (`.github/dependabot.yml`) opens
-weekly PRs for new base image digests, the runtime packages in `app/serve` and
-`admin/serve`, Go modules, and GitHub Actions. Merging one publishes new images.
+Base images are pinned by digest. Dependabot (`.github/dependabot.yml`) checks
+daily for new base image digests, the runtime packages in `app/serve` and
+`admin/serve`, and Go modules, and weekly for GitHub Actions. Each ecosystem
+gets one grouped PR. Merging one publishes new images.
 
 To build an image locally, for example the app:
 
