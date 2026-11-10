@@ -214,6 +214,21 @@ The `tailwind-watch` process should rebuild this automatically when running `npm
 3. Test your changes in the browser
 4. Check terminal output for any errors
 
+### Tests
+
+```bash
+go test ./...
+```
+
+The store integration tests in `internal/store` run the SAML login flow against
+Postgres. They are skipped unless `SSOREADY_TEST_DATABASE_URL` points to an
+empty, disposable database, which they migrate:
+
+```bash
+docker run -d --name ssoready-test-db -p 5433:5432 -e POSTGRES_PASSWORD=password postgres:15-alpine
+SSOREADY_TEST_DATABASE_URL='postgres://postgres:password@localhost:5433/postgres?sslmode=disable' go test ./...
+```
+
 ### Docker images
 
 The `Images` GitHub Actions workflow (`.github/workflows/images.yaml`) runs the
