@@ -1,10 +1,11 @@
 # Runs the Go tests, then builds the five SSOReady images, scans them, and
 # publishes them to Docker Hub as omnifact/ssoready-<name>:<short commit sha>.
 #
-# - Pull requests: test, build and scan only.
-# - Pushes to main: test, build, scan, then push.
-# - Manual runs (any branch): test, build, scan, then push. Use this to try a
-#   branch on the dev stack before merging it.
+# - Pull requests and manual runs: test, build and scan only.
+# - Pushes to main: test, build, scan, then push. Only reviewed code on main is
+#   published. The push runs in the "dockerhub" environment, which holds the
+#   Docker Hub secrets and only allows main, so a branch cannot reach them even
+#   with a changed copy of this workflow.
 #
 # The scan fails on any critical or high vulnerability that has a fix, so an
 # image with known, fixable issues is never published. Base images are pinned
@@ -92,9 +93,12 @@ jobs:
           - name: migrate
             context: .
             file: ./cmd/migrate/Dockerfile
+    # Only publishing runs get the environment, so pull request runs never
+    # wait for it or see its secrets.
+    environment: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') && 'dockerhub' || '' }}
     env:
       IMAGE: omnifact/ssoready-${{ matrix.name }}
-      PUBLISH: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+      PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0

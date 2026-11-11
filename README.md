@@ -236,12 +236,15 @@ Go tests, builds the five images (`app`, `admin`, `auth`, `api`, `migrate`) and
 scans them with Trivy. It fails on any critical or high vulnerability that has a
 fix.
 
-- Pull requests: test, build and scan only.
+- Pull requests and manual runs: test, build and scan only.
 - Pushes to `main`: test, build, scan, and push to Docker Hub as
   `omnifact/ssoready-<name>:<short commit sha>`. Existing tags are never
-  overwritten.
-- Manual runs (Actions → Images → Run workflow) do the same for any branch.
-  Use them to try a branch on the dev stack before merging.
+  overwritten. Only reviewed code on `main` is published.
+
+The push runs in the `dockerhub` GitHub environment. It holds the secrets
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (a Docker Hub token with read and
+write access to the `omnifact/ssoready-*` repositories) and only allows the
+`main` branch, so other branches cannot use them.
 
 Do not build or push images by hand. To deploy a new build, set `imageTag` to
 the new short commit sha in the Omnifact Pulumi config.
