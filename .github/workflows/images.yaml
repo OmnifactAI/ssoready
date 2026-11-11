@@ -215,9 +215,15 @@ jobs:
           set -euo pipefail
           for name in app admin auth api migrate; do
             image="omnifact/ssoready-$name:$TAG"
-            if docker manifest inspect "$image" > /dev/null 2>&1; then
+            # Push only when Docker Hub says the tag is missing. Any other error
+            # (rate limit, network, auth) stops the job instead of risking an
+            # overwrite of a tag that may already be deployed.
+            if out=$(docker manifest inspect "$image" 2>&1); then
               echo "::notice::$image already exists on Docker Hub, not overwriting it."
               continue
+            elif ! grep -qiE 'no such manifest|manifest unknown' <<< "$out"; then
+              echo "::error::Could not check whether $image exists on Docker Hub: $out"
+              exit 1
             fi
             docker push "$image"
             echo "Pushed \`$image\`" >> "$GITHUB_STEP_SUMMARY"
