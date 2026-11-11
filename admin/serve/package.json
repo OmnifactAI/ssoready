@@ -1,0 +1,9 @@
+{
+  "name": "admin-serve",
+  "private": true,
+  "description": "Runtime dependencies of bin/serve-public. The Docker image installs only these, not the build toolchain in ../package.json.",
+  "dependencies": {
+    "express": "^4.22.3",
+    "morgan": "^1.12.1"
+  }
+}

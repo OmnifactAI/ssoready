@@ -214,6 +214,63 @@ The `tailwind-watch` process should rebuild this automatically when running `npm
 3. Test your changes in the browser
 4. Check terminal output for any errors
 
+### Tests
+
+```bash
+go test ./...
+```
+
+The store integration tests in `internal/store` run the SAML login flow against
+Postgres. They are skipped unless `SSOREADY_TEST_DATABASE_URL` points to an
+empty, disposable database, which they migrate:
+
+```bash
+docker run -d --name ssoready-test-db -p 5433:5432 -e POSTGRES_PASSWORD=password postgres:15-alpine
+SSOREADY_TEST_DATABASE_URL='postgres://postgres:password@localhost:5433/postgres?sslmode=disable' go test ./...
+```
+
+### Docker images
+
+The `Images` GitHub Actions workflow (`.github/workflows/images.yaml`) runs the
+Go tests, builds the five images (`app`, `admin`, `auth`, `api`, `migrate`) and
+scans them with Trivy. It fails on any critical or high vulnerability that has a
+fix.
+
+- Pull requests and manual runs: test, build and scan only.
+- Pushes to `main`: test, build, scan, and push to Docker Hub as
+  `omnifact/ssoready-<name>:<commit time>-<short sha>`, for example
+  `20261111.111838-808a1a6` (commit time in UTC). Existing tags are never
+  overwritten. Only reviewed code on `main` is published.
+
+A build publishes all five images or none. The image jobs only build and scan;
+a separate `publish` job pushes the scanned images once all five passed, with
+`migrate` last. Renovate looks up the `migrate` tag, so it never proposes a
+build with images missing.
+
+The `publish` job runs in the `dockerhub` GitHub environment. It holds the secrets
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (a Docker Hub token with read and
+write access to the `omnifact/ssoready-*` repositories) and only allows the
+`main` branch, so other branches cannot use them.
+
+Do not build or push images by hand. Renovate in the Omnifact repo opens a
+merge request that sets `imageTag` in the Pulumi config to the newest tag. The
+time prefix is what lets it sort the tags.
+
+Base images are pinned by digest. Dependabot (`.github/dependabot.yml`) checks
+daily for new base image digests, the runtime packages in `app/serve` and
+`admin/serve`, and Go modules, and weekly for GitHub Actions. Each ecosystem
+gets one grouped PR for minor and patch updates; major updates come as PRs of
+their own. Merging one publishes new images.
+
+To build an image locally, use `docker/spa.Dockerfile` for `app` and `admin`
+(the context is the SPA's directory) and `docker/go.Dockerfile` for `auth`,
+`api` and `migrate` (the context is the repository root):
+
+```bash
+docker build --platform linux/amd64 -f docker/spa.Dockerfile -t ssoready-app:local ./app
+docker build --platform linux/amd64 -f docker/go.Dockerfile --build-arg CMD=auth -t ssoready-auth:local .
+```
+
 ## How SSOReady works
 
 This section provides a high-level overview of how SSOReady works, and how it's possible to implement SAML and SCIM in

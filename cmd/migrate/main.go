@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"log"
 
@@ -101,7 +102,9 @@ func up(_ context.Context, args upArgs) error {
 		return err
 	}
 
-	if err := m.Up(); err != nil {
+	// An up-to-date database is a successful run, not an error. Otherwise the
+	// migration job fails on every deploy that brings no new migrations.
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 	return nil
