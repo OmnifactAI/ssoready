@@ -259,12 +259,16 @@ time prefix is what lets it sort the tags.
 Base images are pinned by digest. Dependabot (`.github/dependabot.yml`) checks
 daily for new base image digests, the runtime packages in `app/serve` and
 `admin/serve`, and Go modules, and weekly for GitHub Actions. Each ecosystem
-gets one grouped PR. Merging one publishes new images.
+gets one grouped PR for minor and patch updates; major updates come as PRs of
+their own. Merging one publishes new images.
 
-To build an image locally, for example the app:
+To build an image locally, use `docker/spa.Dockerfile` for `app` and `admin`
+(the context is the SPA's directory) and `docker/go.Dockerfile` for `auth`,
+`api` and `migrate` (the context is the repository root):
 
 ```bash
-docker build --platform linux/amd64 -t ssoready-app:local ./app
+docker build --platform linux/amd64 -f docker/spa.Dockerfile -t ssoready-app:local ./app
+docker build --platform linux/amd64 -f docker/go.Dockerfile --build-arg CMD=auth -t ssoready-auth:local .
 ```
 
 ## How SSOReady works
