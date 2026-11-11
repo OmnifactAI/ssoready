@@ -4,7 +4,7 @@
 #
 # Base images are pinned by digest. Dependabot opens a PR when a new digest is
 # published, and merging it rebuilds and republishes the image.
-FROM node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS build
+FROM node:26-trixie-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072 AS build
 
 WORKDIR /work
 
@@ -18,7 +18,13 @@ COPY src ./src
 
 RUN npm run build-docker
 
-FROM node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216
+FROM node:26-trixie-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072
+
+# Apply Debian security updates that are newer than the base image, so the
+# image does not wait for an upstream rebuild of node:26-trixie-slim.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
 
