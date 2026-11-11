@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IdP metadata whose signing certificate has a negative serial number (-12345). -->
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://idp.example.com">
+  <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>MIIDBTCCAe2gAwIBAgICz8cwDQYJKoZIhvcNAQELBQAwGjEYMBYGA1UEAwwPaWRwLmV4YW1wbGUuY29tMCAXDTI2MTExMTExMDQ0NVoYDzIxMjYxMDE4MTEwNDQ1WjAaMRgwFgYDVQQDDA9pZHAuZXhhbXBsZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDMkxGerfjgpA14adfzC9snGMttFoXtxQ0VKToAuZdZ+zwAgjXVncJYbj3aqf2DqdLtOPgI3ppygPZbRcOn58EyFpm9ADLIJsiqPrA3nODmJN9PwqQWzQFrgZkHNBJkBd5mEP4NPMHZvDalZ6hNfQzY/QIknzI35ZpkR4cWJS0vtcQO/ulYCLxRV1v+aIadNlLtoAVUV4tLpLcTHm3xOMF+DYm5U3049YHAimwprXtjksubGDu+u01Hq9qq6vX0g13czia5o1LOMxD2wSmbS/kjiaXhbcrhoJmsMj6q2g1QezWAH83EPNd6iSFmzALm8LFN9ADE4ORUPh4AhebsKc41AgMBAAGjUzBRMB0GA1UdDgQWBBT0zNJetY2dvM0rh9naHTfEh0RUojAfBgNVHSMEGDAWgBT0zNJetY2dvM0rh9naHTfEh0RUojAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCsMXUig4hSZnb7SUVH4P0T5iyUlAPeuGxxvupthW8HwXPQEBXbbAqTLE6qK/wgFnFGJbWMPnN8LWhSP9gMn2Wv9EerLhTaqzU4e/CsO4aM3ybTuQbdpSAiinZTgK/wRsDcZVxfb1ZwSEOZB0Jc4h8N7e/UiENkWvOrSQQifczm8l4SwPzNtBDvSHUEb8jxJJN5Yq2kedJvW8Heeoms7d/z3RU87cdkOz/07iQ1pkJBbcLwNVt22aolHMNTiRo6v2d7vQ0gYMgE4hIt7FnrmmdFKwzddloq1Xtwh2PX3vJpBZhI8OK8mgaVd7ittPzGrzlTxrwpcDNJLVcupMCEUTnD</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://idp.example.com/sso"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>

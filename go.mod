@@ -2,11 +2,10 @@ module github.com/ssoready/ssoready
 
 go 1.26.0
 
-// Keep the runtime defaults of Go 1.21, which built the images before. The
-// go line moved to 1.26 only because updated dependencies require it. Newer
-// defaults (e.g. rejecting certificates with negative serial numbers, which
-// some SAML identity providers still use) need their own review and testing.
-godebug default=go1.21
+// Some SAML identity providers still issue certificates with negative serial
+// numbers, which Go rejects by default since 1.23. Keep accepting them; all
+// other runtime defaults follow the go line above.
+godebug x509negativeserial=1
 
 require (
 	connectrpc.com/connect v1.16.2
