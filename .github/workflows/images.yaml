@@ -1,5 +1,9 @@
 # Runs the Go tests, then builds the five SSOReady images, scans them, and
-# publishes them to Docker Hub as omnifact/ssoready-<name>:<short commit sha>.
+# publishes them to Docker Hub as omnifact/ssoready-<name>:<tag>.
+#
+# The tag is the commit time in UTC plus the short commit sha, for example
+# 20261111.111838-808a1a6. The time makes tags sortable, so Renovate in the
+# Omnifact repo can tell which build is newest; the sha says what was built.
 #
 # - Pull requests and manual runs: test, build and scan only.
 # - Pushes to main: test, build, scan, then push. Only reviewed code on main is
@@ -105,8 +109,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # Commit time, not run time: a rerun of the same commit gets the same tag.
       - name: Set tag
-        run: echo "TAG=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_ENV"
+        run: |
+          time=$(TZ=UTC git show -s --format=%cd --date=format-local:%Y%m%d.%H%M%S HEAD)
+          echo "TAG=$time-$(git rev-parse --short=7 HEAD)" >> "$GITHUB_ENV"
 
       - name: Build
         run: docker build --platform linux/amd64 --pull -f "${{ matrix.file }}" -t "$IMAGE:$TAG" "${{ matrix.context }}"

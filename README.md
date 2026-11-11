@@ -238,7 +238,8 @@ fix.
 
 - Pull requests and manual runs: test, build and scan only.
 - Pushes to `main`: test, build, scan, and push to Docker Hub as
-  `omnifact/ssoready-<name>:<short commit sha>`. Existing tags are never
+  `omnifact/ssoready-<name>:<commit time>-<short sha>`, for example
+  `20261111.111838-808a1a6` (commit time in UTC). Existing tags are never
   overwritten. Only reviewed code on `main` is published.
 
 The push runs in the `dockerhub` GitHub environment. It holds the secrets
@@ -246,8 +247,9 @@ The push runs in the `dockerhub` GitHub environment. It holds the secrets
 write access to the `omnifact/ssoready-*` repositories) and only allows the
 `main` branch, so other branches cannot use them.
 
-Do not build or push images by hand. To deploy a new build, set `imageTag` to
-the new short commit sha in the Omnifact Pulumi config.
+Do not build or push images by hand. Renovate in the Omnifact repo opens a
+merge request that sets `imageTag` in the Pulumi config to the newest tag. The
+time prefix is what lets it sort the tags.
 
 Base images are pinned by digest. Dependabot (`.github/dependabot.yml`) checks
 daily for new base image digests, the runtime packages in `app/serve` and
