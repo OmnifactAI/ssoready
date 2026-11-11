@@ -1,3 +1,8 @@
+# Builds the app or the admin image. The build context is the SPA's directory:
+#
+#   docker build -f docker/spa.Dockerfile ./app
+#   docker build -f docker/spa.Dockerfile ./admin
+#
 # The build stage holds the full toolchain (tailwind, esbuild, ...). The
 # runtime stage only gets the built SPA and the two packages bin/serve-public
 # needs (serve/package.json), so the image ships no build tooling.
@@ -43,6 +48,5 @@ COPY --from=build --chown=node:node /work/public ./public
 
 USER node
 
-# Same as `npm run serve-docker`: write public/config.json from the
-# environment, then serve the SPA.
+# Write public/config.json from the environment, then serve the SPA.
 ENTRYPOINT ["/bin/sh", "-c", "./bin/prepare-config-json > ./public/config.json && exec ./bin/serve-public"]

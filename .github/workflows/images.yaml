@@ -75,10 +75,10 @@ jobs:
         with:
           persist-credentials: false
 
-      # Test with the same Go toolchain the images are built with: the build
-      # stage of the api Dockerfile, which holds go.mod, cmd and internal.
+      # Test with the same Go toolchain the images are built with: the source
+      # stage of docker/go.Dockerfile, which holds go.mod, cmd and internal.
       - name: Build test image
-        run: docker build --platform linux/amd64 --target build -f ./cmd/api/Dockerfile -t ssoready-go-build .
+        run: docker build --platform linux/amd64 --target source -f ./docker/go.Dockerfile -t ssoready-go-build .
 
       # Postgres for the store integration tests (internal/store). Same major
       # version as the Omnifact database server.
@@ -109,23 +109,26 @@ jobs:
         include:
           - name: app
             context: ./app
-            file: ./app/Dockerfile
+            file: ./docker/spa.Dockerfile
             smoke-port: 8082
             smoke-env: -e APP_API_URL=http://api -e APP_APP_URL=http://app -e APP_PUBLIC_API_URL=http://public-api
           - name: admin
             context: ./admin
-            file: ./admin/Dockerfile
+            file: ./docker/spa.Dockerfile
             smoke-port: 8083
             smoke-env: -e ADMIN_API_URL=http://api
           - name: auth
             context: .
-            file: ./cmd/auth/Dockerfile
+            file: ./docker/go.Dockerfile
+            cmd: auth
           - name: api
             context: .
-            file: ./cmd/api/Dockerfile
+            file: ./docker/go.Dockerfile
+            cmd: api
           - name: migrate
             context: .
-            file: ./cmd/migrate/Dockerfile
+            file: ./docker/go.Dockerfile
+            cmd: migrate
     env:
       IMAGE: omnifact/ssoready-${{ matrix.name }}
       TAG: ${{ needs.tag.outputs.tag }}
@@ -137,7 +140,7 @@ jobs:
           persist-credentials: false
 
       - name: Build
-        run: docker build --platform linux/amd64 --pull -f "${{ matrix.file }}" -t "$IMAGE:$TAG" "${{ matrix.context }}"
+        run: docker build --platform linux/amd64 --pull -f "${{ matrix.file }}" ${{ matrix.cmd && format('--build-arg CMD={0}', matrix.cmd) || '' }} -t "$IMAGE:$TAG" "${{ matrix.context }}"
 
       # app and admin: start the image as it runs in production and request the
       # SPA. Catches images that build and scan fine but crash at start, for

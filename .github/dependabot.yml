@@ -12,14 +12,10 @@
 # of riding along with routine bumps.
 version: 2
 updates:
-  # Base images (pinned by digest in the Dockerfiles).
+  # Base images (pinned by digest in docker/spa.Dockerfile and
+  # docker/go.Dockerfile).
   - package-ecosystem: docker
-    directories:
-      - /app
-      - /admin
-      - /cmd/auth
-      - /cmd/api
-      - /cmd/migrate
+    directory: /docker
     schedule:
       interval: daily
     groups:
