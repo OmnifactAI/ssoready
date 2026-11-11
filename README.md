@@ -242,7 +242,12 @@ fix.
   `20261111.111838-808a1a6` (commit time in UTC). Existing tags are never
   overwritten. Only reviewed code on `main` is published.
 
-The push runs in the `dockerhub` GitHub environment. It holds the secrets
+A build publishes all five images or none. The image jobs only build and scan;
+a separate `publish` job pushes the scanned images once all five passed, with
+`migrate` last. Renovate looks up the `migrate` tag, so it never proposes a
+build with images missing.
+
+The `publish` job runs in the `dockerhub` GitHub environment. It holds the secrets
 `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (a Docker Hub token with read and
 write access to the `omnifact/ssoready-*` repositories) and only allows the
 `main` branch, so other branches cannot use them.
