@@ -1,7 +1,10 @@
 # Builds the auth, api or migrate image. The build context is the repository
-# root, and CMD names the binary under cmd/:
+# root, and the target names the binary under cmd/:
 #
-#   docker build -f docker/go.Dockerfile --build-arg CMD=auth .
+#   docker build -f docker/go.Dockerfile --target auth .
+#
+# Each binary keeps its name (/auth, /api, /migrate): conf and secretload derive
+# the environment variable prefix from os.Args[0] (AUTH_DB, API_DB, ...).
 #
 # The runtime image holds only that binary, CA certificates and time zone data.
 #
@@ -24,16 +27,21 @@ FROM source AS build
 
 ARG TARGETOS
 ARG TARGETARCH
-ARG CMD
-RUN test -n "$CMD" || { echo "Set --build-arg CMD=auth, api or migrate." >&2; exit 1; }
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags "-w -s" -o ssoready "./cmd/$CMD"
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags "-w -s" -o /out/ ./cmd/auth ./cmd/api ./cmd/migrate
 
-FROM scratch
+FROM scratch AS runtime
 
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-# One fixed path for all three binaries: an exec-form ENTRYPOINT cannot use
-# the CMD build arg, and scratch has no shell to expand it.
-COPY --from=build /work/ssoready /ssoready
 
-ENTRYPOINT ["/ssoready"]
+FROM runtime AS auth
+COPY --from=build /out/auth /auth
+ENTRYPOINT ["/auth"]
+
+FROM runtime AS api
+COPY --from=build /out/api /api
+ENTRYPOINT ["/api"]
+
+FROM runtime AS migrate
+COPY --from=build /out/migrate /migrate
+ENTRYPOINT ["/migrate"]
