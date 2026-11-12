@@ -121,10 +121,12 @@ jobs:
             context: .
             file: ./docker/go.Dockerfile
             cmd: auth
+            env-prefix: AUTH
           - name: api
             context: .
             file: ./docker/go.Dockerfile
             cmd: api
+            env-prefix: API
           - name: migrate
             context: .
             file: ./docker/go.Dockerfile
@@ -140,7 +142,7 @@ jobs:
           persist-credentials: false
 
       - name: Build
-        run: docker build --platform linux/amd64 --pull -f "${{ matrix.file }}" ${{ matrix.cmd && format('--build-arg CMD={0}', matrix.cmd) || '' }} -t "$IMAGE:$TAG" "${{ matrix.context }}"
+        run: docker build --platform linux/amd64 --pull -f "${{ matrix.file }}" ${{ matrix.cmd && format('--target {0}', matrix.cmd) || '' }} -t "$IMAGE:$TAG" "${{ matrix.context }}"
 
       # app and admin: start the image as it runs in production and request the
       # SPA. Catches images that build and scan fine but crash at start, for
@@ -157,6 +159,13 @@ jobs:
             curl -fsS -o /dev/null --retry 30 --retry-all-errors --retry-delay 1 "http://localhost:$port$route"
             echo "$route: ok"
           done
+
+      # auth and api read their config from environment variables named after
+      # the binary (AUTH_DB, API_DB, ...), which is what the deployment sets.
+      # Fails if the binary name, and with it the prefix, changes.
+      - name: Config check
+        if: matrix.env-prefix
+        run: docker run --rm "$IMAGE:$TAG" -h 2>&1 | grep -F "(env var ${{ matrix.env-prefix }}_DB)"
 
       - name: Scan
         run: |

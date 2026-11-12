@@ -268,7 +268,7 @@ To build an image locally, use `docker/spa.Dockerfile` for `app` and `admin`
 
 ```bash
 docker build --platform linux/amd64 -f docker/spa.Dockerfile -t ssoready-app:local ./app
-docker build --platform linux/amd64 -f docker/go.Dockerfile --build-arg CMD=auth -t ssoready-auth:local .
+docker build --platform linux/amd64 -f docker/go.Dockerfile --target auth -t ssoready-auth:local .
 ```
 
 ## How SSOReady works
